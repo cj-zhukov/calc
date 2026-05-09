@@ -1,5 +1,5 @@
 const std = @import("std");
-const calculate = @import("calc.zig").calculate;
+const calc = @import("calc");
 
 pub fn run() !void {
     var stdin_buffer: [1024]u8 = undefined;
@@ -27,7 +27,7 @@ pub fn run() !void {
         // exit to quit from calculator
         if (std.mem.eql(u8, input, "exit")) break;
 
-        const result = calculate(allocator, input);
+        const result = calc.calculate(allocator, input);
         if (result) |res| {
             const msg = try std.fmt.bufPrint(&out_buf, "{d}\n", .{res});
             try writer.writeAll(msg);

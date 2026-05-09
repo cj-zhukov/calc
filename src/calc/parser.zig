@@ -1,12 +1,12 @@
+const calc = @import("root.zig");
+const CalcError = calc.err.CalcError;
+const Token = calc.token.Token;
+const Operator = calc.token.Operator;
+const Bracket = calc.token.Bracket;
+
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
-
-const CalcError = @import("error.zig").CalcError;
-const token_file = @import("token.zig");
-const Token = token_file.Token;
-const Operator = token_file.Operator;
-const Bracket = token_file.Bracket;
 
 pub fn toPostfix(
     allocator: Allocator,
