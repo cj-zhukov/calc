@@ -1,10 +1,12 @@
+pub const lexer = @import("lexer.zig");
+pub const parser = @import("parser.zig");
+pub const eval = @import("eval.zig");
+pub const token = @import("token.zig");
+pub const err = @import("error.zig");
+
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
-
-const lexer = @import("lexer.zig");
-const parser = @import("parser.zig");
-const eval = @import("eval.zig");
 
 pub fn calculate(allocator: Allocator, expr: []const u8) !f32 {
     const tokens = try lexer.tokenize(allocator, expr);

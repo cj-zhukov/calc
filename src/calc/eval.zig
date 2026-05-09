@@ -1,10 +1,11 @@
+const calc = @import("root.zig");
+const CalcError = calc.err.CalcError;
+const Token = calc.token.Token;
+const Operator = calc.token.Operator;
+
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const testing = std.testing;
-
-const CalcError = @import("error.zig").CalcError;
-const Token = @import("token.zig").Token;
-const Operator = @import("token.zig").Operator;
 
 pub fn evalPostfix(
     allocator: Allocator,
