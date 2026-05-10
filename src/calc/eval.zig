@@ -9,19 +9,15 @@ const testing = std.testing;
 
 pub fn evalPostfix(
     allocator: Allocator,
-    tokens_input: []const Token,
+    tokens: []const Token,
 ) !f32 {
-    var tokens = try std.ArrayList(Token).initCapacity(allocator, 0);
-    defer tokens.deinit(allocator);
-
-    try tokens.appendSlice(allocator, tokens_input);
-
-    std.mem.reverse(Token, tokens.items);
-
-    var stack = try std.ArrayList(f32).initCapacity(allocator, 0);
+    var stack = try std.ArrayList(f32).initCapacity(
+        allocator,
+        tokens.len,
+    );
     defer stack.deinit(allocator);
 
-    while (tokens.pop()) |token| {
+    for (tokens) |token| {
         switch (token) {
             .Number => |num| {
                 try stack.append(allocator, num);
@@ -39,9 +35,9 @@ pub fn evalPostfix(
                     .Sub => left - right,
                     .Mul => left * right,
                     .Div => blk: {
-                        if (right == 0.0) {
+                        if (right == 0.0)
                             return CalcError.DivisionByZero;
-                        }
+
                         break :blk left / right;
                     },
                 };
@@ -53,9 +49,8 @@ pub fn evalPostfix(
         }
     }
 
-    if (stack.items.len != 1) {
+    if (stack.items.len != 1)
         return CalcError.NotEnoughOperands;
-    }
 
     return stack.pop().?;
 }

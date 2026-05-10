@@ -9,7 +9,9 @@ pub fn run() !void {
     const reader = &stdin_reader.interface;
     const writer = &stdout_writer.interface;
 
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     try writer.writeAll("calculator\n");
 

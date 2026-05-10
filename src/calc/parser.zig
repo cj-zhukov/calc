@@ -12,10 +12,10 @@ pub fn toPostfix(
     allocator: Allocator,
     tokens: []const Token,
 ) ![]Token {
-    var output = try std.ArrayList(Token).initCapacity(allocator, 0);
+    var output = try std.ArrayList(Token).initCapacity(allocator, tokens.len);
     defer output.deinit(allocator);
 
-    var stack = try std.ArrayList(Token).initCapacity(allocator, 0);
+    var stack = try std.ArrayList(Token).initCapacity(allocator, tokens.len);
     defer stack.deinit(allocator);
 
     for (tokens) |token| {
