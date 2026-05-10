@@ -12,23 +12,31 @@ pub fn tokenize(
     allocator: Allocator,
     expr: []const u8,
 ) ![]Token {
-    var tokens = try std.ArrayList(Token).initCapacity(allocator, 0);
+    var tokens = try std.ArrayList(Token)
+        .initCapacity(allocator, expr.len);
     defer tokens.deinit(allocator);
 
-    var parens = try std.ArrayList(u8).initCapacity(allocator, 0);
-    defer parens.deinit(allocator);
+    var paren_depth: usize = 0;
 
-    var number_buf = try std.ArrayList(u8).initCapacity(allocator, 0);
-    defer number_buf.deinit(allocator);
+    // start index of current number
+    var num_start: ?usize = null;
 
-    for (expr) |c| {
+    for (expr, 0..) |c, i| {
         switch (c) {
             '0'...'9', '.' => {
-                try number_buf.append(allocator, c);
+                // number started
+                if (num_start == null)
+                    num_start = i;
             },
 
             '+', '-', '*', '/' => {
-                try flushNumber(allocator, &number_buf, &tokens);
+                try flushNumber(
+                    allocator,
+                    expr,
+                    i,
+                    &num_start,
+                    &tokens,
+                );
 
                 const op = switch (c) {
                     '+' => Operator.Add,
@@ -38,58 +46,102 @@ pub fn tokenize(
                     else => unreachable,
                 };
 
-                try tokens.append(allocator, Token{ .Op = op });
+                try tokens.append(
+                    allocator,
+                    Token{ .Op = op },
+                );
             },
 
             '(' => {
-                try flushNumber(allocator, &number_buf, &tokens);
-                try tokens.append(allocator, Token{ .Bracket = Bracket.Open });
-                try parens.append(allocator, c);
+                try flushNumber(
+                    allocator,
+                    expr,
+                    i,
+                    &num_start,
+                    &tokens,
+                );
+
+                try tokens.append(
+                    allocator,
+                    Token{ .Bracket = Bracket.Open },
+                );
+
+                paren_depth += 1;
             },
 
             ')' => {
-                try flushNumber(allocator, &number_buf, &tokens);
-                try tokens.append(allocator, Token{ .Bracket = Bracket.Close });
+                try flushNumber(
+                    allocator,
+                    expr,
+                    i,
+                    &num_start,
+                    &tokens,
+                );
 
-                if (parens.items.len == 0) {
+                if (paren_depth == 0)
                     return CalcError.MismatchedParens;
-                }
-                _ = parens.pop();
+
+                paren_depth -= 1;
+
+                try tokens.append(
+                    allocator,
+                    Token{ .Bracket = Bracket.Close },
+                );
             },
 
-            ' ', '\n' => {
-                try flushNumber(allocator, &number_buf, &tokens);
+            ' ', '\n', '\t' => {
+                try flushNumber(
+                    allocator,
+                    expr,
+                    i,
+                    &num_start,
+                    &tokens,
+                );
             },
 
             else => return CalcError.BadToken,
         }
     }
 
-    // flush last number
-    try flushNumber(allocator, &number_buf, &tokens);
+    // flush final number
+    try flushNumber(
+        allocator,
+        expr,
+        expr.len,
+        &num_start,
+        &tokens,
+    );
 
-    if (parens.items.len != 0) {
+    if (paren_depth != 0)
         return CalcError.MismatchedParens;
-    }
 
     return tokens.toOwnedSlice(allocator);
 }
 
 fn flushNumber(
-    allocator: std.mem.Allocator,
-    buf: *std.ArrayList(u8),
+    allocator: Allocator,
+    expr: []const u8,
+    end: usize,
+    num_start: *?usize,
     tokens: *std.ArrayList(Token),
 ) !void {
-    if (buf.items.len == 0) return;
+    const start = num_start.* orelse return;
 
-    const slice = buf.items;
+    const slice = expr[start..end];
 
-    const number = std.fmt.parseFloat(f32, slice) catch {
+    const number = std.fmt.parseFloat(
+        f32,
+        slice,
+    ) catch {
         return CalcError.BadToken;
     };
 
-    try tokens.append(allocator, Token{ .Number = number });
-    buf.clearRetainingCapacity();
+    try tokens.append(
+        allocator,
+        Token{ .Number = number },
+    );
+
+    num_start.* = null;
 }
 
 fn expectTokensEqual(expected: []const Token, actual: []const Token) !void {
