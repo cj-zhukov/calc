@@ -99,7 +99,10 @@ pub fn tokenize(
                 );
             },
 
-            else => return CalcError.BadToken,
+            else => {
+                std.log.err("bad token: '{c}'", .{c});
+                return CalcError.BadToken;
+            },
         }
     }
 
